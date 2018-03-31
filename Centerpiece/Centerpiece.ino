@@ -35,12 +35,9 @@ int notes[] = { NOTE_A3,
                 NOTE_E4,
                 NOTE_F4,
                 NOTE_G4,
-                NOTE_A5,
-                NOTE_B5,
+                NOTE_A4,
+                NOTE_B4,
                 NOTE_C5};
-int noteStar = NOTE_C2;
-int noteHash = NOTE_D2;
-
 
 // You can declare the tones as an array
 Tone notePlayer;
@@ -52,12 +49,20 @@ void setup(){
   notePlayer.begin(11);
 }
   
-void loop(){
+void loop() {
 
   notePlayer.stop();
 
+  if ( Serial.available() )
+  {
+    // If new input is available on serial port
+    parseSerialInput(Serial.read()); // parse it
+  }
+
   char key = keypad.getKey();
-  if (key){
+  if (key) {
+
+    Serial.print(key); //This goes to the Game Server
   
     //SOUND
     switch(key)
@@ -104,22 +109,11 @@ void loop(){
         break;
 
       case '*':
-        notePlayer.play(noteStar);
-        delay(5);
-        notePlayer.play(noteStar);
-        delay(5);
-        notePlayer.play(noteStar);
-        delay(100);
+        PlayBadSound();
         break;
 
       case '#':
-        notePlayer.play(noteHash);
-        delay(5);
-        notePlayer.play(noteHash);
-        delay(5);
-        notePlayer.play(noteHash);
-        
-        delay(100);
+        PlayGoodSound();
         break;
   
       default:
@@ -129,5 +123,52 @@ void loop(){
     //Actions
     
 
-  } //else we idle loop
+  }
+} //End loop
+
+
+//Blocking
+void PlayBadSound()
+{
+  notePlayer.stop();
+  notePlayer.play(NOTE_C2);
+  delay(10);
+  notePlayer.play(NOTE_B2);
+  delay(10);
+  notePlayer.play(NOTE_A2);
+  
+  delay(100);
+  notePlayer.stop();
+}
+//Blocking
+void PlayGoodSound()
+{
+  notePlayer.stop();
+  notePlayer.play(NOTE_A5);
+  delay(50);
+  notePlayer.play(NOTE_B5);
+  delay(50);
+  notePlayer.play(NOTE_C5);
+  
+  delay(50);
+  notePlayer.stop();
+}
+
+
+// Parse serial input, take action if it's a valid character
+void parseSerialInput(char c)
+{  
+  switch (c)
+  {
+  case 's': // Successful Code
+    PlayGoodSound();
+    break;
+
+  case 'f': // Incorrect code
+    PlayBadSound();
+    break;
+    
+  default: // If an invalid character, do nothing
+    break;
+  }
 }
