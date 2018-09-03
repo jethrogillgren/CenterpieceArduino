@@ -10,6 +10,7 @@
 #include <Keypad.h>
 
 //KEYPAD
+//Connect Keypad pins 1-7 to arduino pins 2-8
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
 char keys[ROWS][COLS] = {
