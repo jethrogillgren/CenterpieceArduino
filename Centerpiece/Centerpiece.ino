@@ -33,7 +33,7 @@ char keys[ROWS][COLS] = {
 //Combined with PWM LED version
 //byte rowPins[ROWS] = {17, 19, 2, 15}; //connect to the row pinouts of the keypad
 //byte colPins[COLS] = {18, 14, 16}; //connect to the column pinouts of the keypad
-byte rowPins[ROWS] = {A3, A5, 4, A1}; //connect to the row pinouts of the keypad
+byte rowPins[ROWS] = {A3, A5, 7, A1}; //connect to the row pinouts of the keypad
 byte colPins[COLS] = {A4, A0, A2}; //connect to the column pinouts of the keypad
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
@@ -91,7 +91,7 @@ Adafruit_NeoPixel rhsCreatorToCombinorPixels
 */
 
 //// XBEE & COMMUNICATIONS
-SoftwareSerial xbeeSerial(6, 7); // RX, TX
+SoftwareSerial xbeeSerial(2, 4); // RX, TX
 
 //Works with Series1 and 2
 XBeeWithCallbacks xbee;
@@ -107,11 +107,10 @@ XBeeWithCallbacks xbee;
 // Build a reuseable message packet to send to the Co-Ordinator
 XBeeAddress64 coordinatorAddr = XBeeAddress64(0x00000000, 0x00000000);
 
-//uint8_t pressMessagePayload[4] = {0};
-//ZBTxRequest pressMessage = ZBTxRequest(coordinatorAddr, pressMessagePayload, sizeof(pressMessagePayload));
+uint8_t pressMessagePayload[1] = {0};
+ZBTxRequest pressMessage = ZBTxRequest(coordinatorAddr, pressMessagePayload, sizeof(pressMessagePayload));
 
-uint8_t placeMessagePayload[4] = {0};
-ZBTxRequest placeMessage = ZBTxRequest(coordinatorAddr, placeMessagePayload, sizeof(placeMessagePayload));
+
 
 
 //// SOUND
@@ -210,13 +209,9 @@ void loop() {
   // Continuously let xbee read packets and call callbacks.
   xbee.loop();
 
-
-  SendPressedMessage('a');
-  delay(100);
-
   ////LED Buttons
   //Serial.println( "Wood: " + digitalRead(woodPress) );
-  /*if ( analogRead(woodPress) > 200 )
+  if ( analogRead(woodPress) > 200 )
   {
     Serial.println("Wood Pressed");
     SendPressedMessage(MSG_WOOD_PRESSED);
@@ -240,7 +235,7 @@ void loop() {
   {
     Serial.println("Earth Pressed");
     SendPressedMessage(MSG_EARTH_PRESSED);
-  }*/
+  }
 
   //// LEDs
   if( woodBrightness < woodTarget )
@@ -589,33 +584,15 @@ void parseCommand(char c)
 
 void SendPressedMessage( char msg )
 {
-    /*uint8_t test = 46;
-    pressMessagePayload[0] = test;
+    pressMessagePayload[0] = msg;
     pressMessage.setFrameId(xbee.getNextFrameId());
-    
-    Serial.print(F("SENDING 'Pressed' Message to Co-ordinator: " ));
+
+    Serial.print(F("SENDING Message to Co-ordinator: " ));
     Serial.print(pressMessagePayload[0], HEX);
-    Serial.print(pressMessagePayload[1], HEX);
-    Serial.print(pressMessagePayload[2], HEX);
-    Serial.print(pressMessagePayload[3], HEX);
-
     Serial.println();
-    //xbee.send(pressMessage);*/
-
-    Serial.println(F("SENDING UID:"));
-    for ( uint8_t i = 0; i < 4; i++) {  //
-      placeMessagePayload[i] = 0x0;
-      Serial.print(placeMessagePayload[i], HEX);
-    }
-    Serial.println();
-  
-    placeMessage.setFrameId(xbee.getNextFrameId());
-    
-    Serial.println("SENDING 'Placed' Message to Co-ordinator");
-    //xbee.send(placeMessage);
     
     // Send the command and wait up to N ms for a response.  xbee loop continues during this time.
-    uint8_t status = xbee.sendAndWait(placeMessage, 5000);
+    uint8_t status = xbee.sendAndWait(pressMessage, 5000);
     if (status == 0)
     {
       Serial.println(F("SEND ACKNOWLEDGED"));
