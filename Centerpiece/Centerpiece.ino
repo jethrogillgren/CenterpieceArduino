@@ -234,16 +234,6 @@ void loop() {
     analogWrite(woodLED, woodBrightness);
     delay( fadeDelay);
   }
-  
-  /* <-- Debug Fade code
-  analogWrite(woodLED, woodBrightness);
-  woodBrightness = woodBrightness + fadeAmount;
-  if (woodBrightness <= 0 || woodBrightness >= 255) {
-    fadeAmount = -fadeAmount;
-  }
-  delay(30);
-  */
-  
   if( metalBrightness < metalTarget )
   {
     metalBrightness+=fadeAmount;
@@ -423,7 +413,8 @@ void SetAllLEDs( int amount)
     analogWrite(waterLED, amount);
     analogWrite(metalLED, amount);
     analogWrite(earthLED, amount);
-
+    Serial.print("Set all LEDs: ");
+    Serial.println(amount);
 }
 
  void FadeAllLEDs(int amount)
