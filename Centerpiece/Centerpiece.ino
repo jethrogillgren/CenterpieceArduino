@@ -28,10 +28,11 @@ char keys[ROWS][COLS] = {
 //byte colPins[COLS] = {6, 2, 4}; //connect to the column pinouts of the keypad
 
 //Combined with PWM LED version
-//byte rowPins[ROWS] = {17, 19, 2, 15}; //connect to the row pinouts of the keypad
-//byte colPins[COLS] = {18, 14, 16}; //connect to the column pinouts of the keypad
-byte rowPins[ROWS] = {A3, A5, 7, A1}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {A4, A0, A2}; //connect to the column pinouts of the keypad
+byte rowPins[ROWS] = {A3, A1, A0, A5}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {A2, 7, A4}; //connect to the column pinouts of the keypad
+//byte rowPins[ROWS] = {A3, A5, 7, A1}; //connect to the row pinouts of the keypad
+//byte colPins[COLS] = {A4, A0, A2}; //connect to the column pinouts of the keypad
+
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
@@ -376,8 +377,8 @@ void zbReceive(ZBRxResponse& rx, uintptr_t data) {
 
 int badMelody[] =      {196, 196, 196};
 int badMelodyDelay[] = {125, 125, 125};
-int goodMelody[] =      {440, 659, 783, 880, 1046};
-int goodMelodyDelay[] = {125, 125,  42,  42,   42};
+int goodMelody[] =      {523.25, 659.26, 1046.5};
+int goodMelodyDelay[] = {125 , 125,  250};
 int tuneMelody[] =      {262, 196, 196, 220, 196, 0,   247, 262};
 int tuneMelodyDelay[] = {250, 125, 125, 250, 250, 250, 250, 250};
 
