@@ -41,11 +41,11 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 const int halfLitBrightness = 100;
 
 //Button LEDs - These (PWM) pins should connect to a MOSFET which controlls the Button LED, as it is 12V.
-int woodLED = 3;
-int metalLED = 5;
+int woodLED = 10;
+int metalLED = 9;
 int fireLED = 6;
-int waterLED = 9;
-int earthLED = 10;
+int waterLED = 5;
+int earthLED = 3;
 
 int woodPress = A6;//Analog
 int metalPress = A7;//Analog
@@ -213,34 +213,42 @@ void loop() {
   xbee.loop();
 
   ////LED Buttons
-  //Serial.println( "Wood: " + digitalRead(woodPress) );
+  /*Serial.print( "Wood: ");
+  Serial.print(analogRead(woodPress) );
+  Serial.print( "    Metal: ");
+  Serial.println(analogRead(metalPress) );
+*/
+
+//return;
+
   if ( analogRead(woodPress) > 200 )
   {
     Serial.println("Wood Pressed");
-    SendPressedMessage(MSG_WOOD_PRESSED);
+    SendPressedMessage(MSG_WOOD_PRESSED, false);
   }
   if ( analogRead(metalPress) > 200 )
   {
     Serial.println("Metal Pressed");
-    SendPressedMessage(MSG_METAL_PRESSED);
+    SendPressedMessage(MSG_METAL_PRESSED, false);
   }
   if ( digitalRead(firePress) == HIGH )
   {
     Serial.println("Fire Pressed");
-    SendPressedMessage(MSG_FIRE_PRESSED);
+    SendPressedMessage(MSG_FIRE_PRESSED, false);
   }
   if ( digitalRead(waterPress) == HIGH )
   {
     Serial.println("Water Pressed");
-    SendPressedMessage(MSG_WATER_PRESSED);
+    SendPressedMessage(MSG_WATER_PRESSED, false);
   }
   if ( digitalRead(earthPress) == HIGH )
   {
     Serial.println("Earth Pressed");
-    SendPressedMessage(MSG_EARTH_PRESSED);
+    SendPressedMessage(MSG_EARTH_PRESSED, false);
   }
 
   //// LEDs
+
   if ( woodBrightness < woodTarget )
   {
     woodBrightness += fadeAmount;
@@ -278,7 +286,7 @@ void loop() {
   if (key) {
 
     Serial.println(key + " pressed");
-    SendPressedMessage( key ); //This goes to the Game Server
+    SendPressedMessage( key, false ); //This goes to the Game Server
 
     //SOUND
     switch (key)
@@ -319,7 +327,7 @@ void loop() {
         break;
 
       case '#':
-        PlayGoodSound();
+        //PlayGoodSound();
         break;
 
       default:
@@ -428,10 +436,22 @@ void SetAllLEDs( int amount)
   analogWrite(waterLED, amount);
   analogWrite(metalLED, amount);
   analogWrite(earthLED, amount);
+
+
+  //No fading needed, but we want to update the fade values anyway.
+  FadeAllLEDs(amount);
+  
+  woodBrightness = amount;
+  fireBrightness = amount;
+  metalBrightness = amount;
+  waterBrightness = amount;
+  earthBrightness = amount;
+  
   Serial.print("Set all LEDs: ");
   Serial.println(amount);
 }
 
+//Only fades up.
 void FadeAllLEDs(int amount)
 {
   woodTarget = amount;
@@ -483,8 +503,10 @@ void FadeAllLEDs(int amount)
 // Parse serial input, take action if it's a valid character
 void parseCommand(char c)
 {
-  Serial.print(F("Handling command: 0x" ));
+  Serial.print(F("Handling command  HEX: 0x" ));
   Serial.print(c, HEX);
+  Serial.print(F(" ASCII:" ));
+  Serial.print(c);
   Serial.println();
   
   switch (c)
@@ -502,14 +524,14 @@ void parseCommand(char c)
       /*SetNeopixelColourGreen( lhsCreatorPixels, creatorNumLEDs );
         SetNeopixelColourGreen( rhsCreatorPixels, creatorNumLEDs );*/
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
     case MSG_WOOD_COMBINOR: // Light the Combinor Green LEDs
       woodTarget = 255;
       //SetNeopixelColourGreen( lhsCreatorToCombinorPixels, creatorNumLEDs );
       //SetNeopixelColourGreen( rhsCreatorToCombinorPixels, creatorNumLEDs );
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
 
     case MSG_FIRE_CREATOR: // Light the Fire Creator LEDs
@@ -517,14 +539,14 @@ void parseCommand(char c)
       //SetNeopixelColourRed( lhsCreatorPixels, creatorNumLEDs );
       //SetNeopixelColourRed( rhsCreatorPixels, creatorNumLEDs );
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
     case MSG_FIRE_COMBINOR: // Light the Combinor Red LEDs
       fireTarget = 255;
       //SetNeopixelColourRed( lhsCreatorToCombinorPixels, creatorNumLEDs );
       //SetNeopixelColourRed( rhsCreatorToCombinorPixels, creatorNumLEDs );
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
 
     case MSG_WATER_CREATOR: // Light the Water Creator LEDs
@@ -539,7 +561,7 @@ void parseCommand(char c)
       //SetNeopixelColourBlue( lhsCreatorToCombinorPixels, creatorNumLEDs );
       //SetNeopixelColourBlue( rhsCreatorToCombinorPixels, creatorNumLEDs );
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
 
     case MSG_METAL_CREATOR: // Light the Metal Creator LEDs
@@ -547,14 +569,14 @@ void parseCommand(char c)
       //SetNeopixelColourWhite( lhsCreatorPixels, creatorNumLEDs );
       //SetNeopixelColourWhite( rhsCreatorPixels, creatorNumLEDs );
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
     case MSG_METAL_COMBINOR: // Light the Combinor White LEDs
       metalTarget = 255;
       //SetNeopixelColourWhite( lhsCreatorToCombinorPixels, creatorNumLEDs );
       //SetNeopixelColourWhite( rhsCreatorToCombinorPixels, creatorNumLEDs );
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
 
     case MSG_EARTH_CREATOR: // Light the Earth Creator LEDs
@@ -562,18 +584,18 @@ void parseCommand(char c)
       //SetNeopixelColourYellow( lhsCreatorPixels, creatorNumLEDs );
       //SetNeopixelColourYellow( rhsCreatorPixels, creatorNumLEDs );
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
     case MSG_EARTH_COMBINOR: // Light the Combinor Yellow LEDs
       earthTarget = 255;
       //SetNeopixelColourYellow( lhsCreatorToCombinorPixels, creatorNumLEDs );
       //SetNeopixelColourYellow( rhsCreatorToCombinorPixels, creatorNumLEDs );
 
-      PlayGoodSound();
+      //PlayGoodSound();
       break;
 
     case MSG_RESET: // Turn off all RGB LEDs
-      ResetAllLEDs();
+      SetAllLEDs(0);
       break;
 
     default: // If an invalid character, do nothing
@@ -581,7 +603,7 @@ void parseCommand(char c)
   }
 }
 
-void SendPressedMessage( char msg )
+void SendPressedMessage( char msg, bool async )
 {
   pressMessagePayload[0] = msg;
   pressMessage.setFrameId(xbee.getNextFrameId());
@@ -589,6 +611,9 @@ void SendPressedMessage( char msg )
   Serial.print(F("SENDING Message to Co-ordinator: " ));
   Serial.print(pressMessagePayload[0], HEX);
   Serial.println();
+
+if(async)
+{
 
   // Send the command and wait up to N ms for a response.  xbee loop continues during this time.
   uint8_t status = xbee.sendAndWait(pressMessage, 5000);
@@ -602,6 +627,11 @@ void SendPressedMessage( char msg )
     printHex(status, 2);
     Serial.println();
   }
+}
+else
+{
+  xbee.send(pressMessage);
+}
 }
 
 // UTIL FUNCTIONS
