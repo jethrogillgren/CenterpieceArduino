@@ -1,7 +1,7 @@
 /*
- * --------------------------------------------------------------------------------------------------------------------
- * XBee comms control 5 RGB LEDs and a keypad/buzzer.
- * --------------------------------------------------------------------------------------------------------------------
+ * ----------------------------------------------------------------
+ * XBee comms control 5 RGB LEDs and a keypad/buzzer using a Mega.
+ * ----------------------------------------------------------------
  *
  */
 
@@ -9,7 +9,6 @@
 #include <Keypad.h>
 #include <Adafruit_NeoPixel.h>
 #include <XBee.h>
-#include <SoftwareSerial.h>
 #include <TimerFreeTone.h>
 
 //KEYPAD
@@ -28,11 +27,12 @@ char keys[ROWS][COLS] = {
 //byte colPins[COLS] = {6, 2, 4}; //connect to the column pinouts of the keypad
 
 //Combined with PWM LED version
-byte rowPins[ROWS] = {A3, A1, A0, A5}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {A2, 7, A4}; //connect to the column pinouts of the keypad
-//byte rowPins[ROWS] = {A3, A5, 7, A1}; //connect to the row pinouts of the keypad
-//byte colPins[COLS] = {A4, A0, A2}; //connect to the column pinouts of the keypad
+//byte rowPins[ROWS] = {A3, A1, A0, A5}; //connect to the row pinouts of the keypad
+//byte colPins[COLS] = {A2, 7, A4}; //connect to the column pinouts of the keypad
+byte rowPins[ROWS] = {43,52,53,44}; //connect to the row pinouts of the keypad 
+byte colPins[COLS] = {42,45,47}; //connect to the column pinouts of the keypad
 
+//1>45 .   2>44 .   3>47 .   4>43 .  5>42 .   6>52 .   7>53
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
@@ -41,17 +41,17 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 const int halfLitBrightness = 100;
 
 //Button LEDs - These (PWM) pins should connect to a MOSFET which controlls the Button LED, as it is 12V.
-int woodLED = 10;
-int metalLED = 9;
-int fireLED = 6;
-int waterLED = 5;
-int earthLED = 3;
+int woodLED = 5;
+int metalLED = 8;
+int fireLED = 7;
+int waterLED = 2;
+int earthLED = 4;
 
-int woodPress = A6;//Analog
-int metalPress = A7;//Analog
-int firePress = 8;//Digital
-int waterPress = 11;//Digital
-int earthPress = 12;//Digital
+int woodPress = 39;//Digital
+int metalPress = 41;//Digital
+int firePress = 38;//Digital
+int waterPress = 37;//Digital
+int earthPress = 36;//Digital
 
 //Active brightness - will get tweened up to 255, once set to >0
 int woodBrightness = 0;
@@ -89,17 +89,23 @@ int fadeDelay = 20; //speed of fade
 */
 
 //// XBEE & COMMUNICATIONS
-SoftwareSerial xbeeSerial(2, 4); // RX, TX
 
 //Works with Series1 and 2
 XBeeWithCallbacks xbee;
 
+//defined in CenterpieceCommunicator in C#
 #define MSG_WOOD_PRESSED 'w'
 #define MSG_METAL_PRESSED 'm'
 #define MSG_FIRE_PRESSED 'f'
 #define MSG_WATER_PRESSED 'W'
 #define MSG_EARTH_PRESSED 'e'
 
+#define MSG_RESET   'N'
+
+#define MSG_SUCCESSFUL_SOUND 'S'
+#define MSG_UNSUCCESSFUL_SOUND 's'
+
+//defined in Util.changeMsgLookup in C#
 #define MSG_WOOD_CREATOR 'g'
 #define MSG_METAL_CREATOR 'w'
 #define MSG_FIRE_CREATOR 'r'
@@ -111,7 +117,8 @@ XBeeWithCallbacks xbee;
 #define MSG_WATER_COMBINOR 'B'
 #define MSG_EARTH_COMBINOR 'Y'
 
-#define MSG_RESET   'n'
+
+
 
 // Build a reuseable message packet to send to the Co-Ordinator
 XBeeAddress64 coordinatorAddr = XBeeAddress64(0x00000000, 0x00000000);
@@ -127,8 +134,8 @@ ZBTxRequest pressMessage = ZBTxRequest(coordinatorAddr, pressMessagePayload, siz
 //#include <Tone.h> <-- This collided with using PWM Timer on Pins 3 and 11
 //Tone notePlayer;
 
-#define TONE_PIN 13
-const int keyDelay = 200;
+#define TONE_PIN 6
+const int keyDelay = 100;
 
 //Major C chord starting from A4
 int notes[] = { 440,
@@ -150,12 +157,12 @@ void setup() {
 
   //notePlayer.begin(buzzerPin);
 
-  //pinMode(woodPress, INPUT); <-- Analogue pins do not use pinMode to initialize
-  //digitalWrite(woodPress, HIGH);
-  //pinMode(metalPress, INPUT);
-  //digitalWrite(metalPress, HIGH);
-  pinMode(firePress, INPUT);// initialize the pushbutton pin as an input:
-  digitalWrite(firePress, HIGH);// connect internal pull-up so it is not floating
+  pinMode(woodPress, INPUT);// initialize the pushbutton pin as an input:
+  digitalWrite(woodPress, HIGH);// connect internal pull-up so it is not floating
+  pinMode(metalPress, INPUT);
+  digitalWrite(metalPress, HIGH);
+  pinMode(firePress, INPUT);
+  digitalWrite(firePress, HIGH);
   pinMode(waterPress, INPUT);
   digitalWrite(waterPress, HIGH);
   pinMode(earthPress, INPUT);
@@ -178,11 +185,12 @@ void setup() {
   //SetAllLEDs(255);
   SetAllLEDs(255);
   PlayGoodSound();
+  delay(2000);
   SetAllLEDs(0);
 
   // XBEE
-  xbeeSerial.begin(9600);
-  xbee.setSerial(xbeeSerial);
+  Serial1.begin(9600);
+  xbee.setSerial(Serial1);
 
   // Make sure that any errors are logged to Serial. The address of
   // Serial is first cast to Print*, since that's what the callback
@@ -212,21 +220,20 @@ void loop() {
   // Continuously let xbee read packets and call callbacks.
   xbee.loop();
 
+
   ////LED Buttons
   /*Serial.print( "Wood: ");
   Serial.print(analogRead(woodPress) );
   Serial.print( "    Metal: ");
   Serial.println(analogRead(metalPress) );
-*/
+  */
 
-//return;
-
-  if ( analogRead(woodPress) > 200 )
+  if ( digitalRead(woodPress) == HIGH )
   {
     Serial.println("Wood Pressed");
     SendPressedMessage(MSG_WOOD_PRESSED, false);
   }
-  if ( analogRead(metalPress) > 200 )
+  if ( digitalRead(metalPress) == HIGH )
   {
     Serial.println("Metal Pressed");
     SendPressedMessage(MSG_METAL_PRESSED, false);
@@ -239,7 +246,7 @@ void loop() {
   if ( digitalRead(waterPress) == HIGH )
   {
     Serial.println("Water Pressed");
-    SendPressedMessage(MSG_WATER_PRESSED, false);
+    SendPressedMessage(MSG_WATER_PRESSED, true);
   }
   if ( digitalRead(earthPress) == HIGH )
   {
@@ -336,10 +343,6 @@ void loop() {
 
   }
 
-  //TODO
-  // Read any keypresses on the 5 RGB LEDs
-  // and send to server using same CommandCodes Serial.print("G"); //This goes to the Game Server
-
 } //End loop
 
 
@@ -382,7 +385,7 @@ void zbReceive(ZBRxResponse& rx, uintptr_t data) {
 
 
 
-
+//Changed must be updated in the Melody functions
 int badMelody[] =      {196, 196, 196};
 int badMelodyDelay[] = {125, 125, 125};
 int goodMelody[] =      {523.25, 659.26, 1046.5};
@@ -401,7 +404,7 @@ void PlayBadSound()
 //Blocking
 void PlayGoodSound()
 {
-  for ( int thisNote = 0; thisNote < 5; thisNote++)
+  for ( int thisNote = 0; thisNote < 3; thisNote++)
   {
     TimerFreeTone(TONE_PIN, goodMelody[thisNote], goodMelodyDelay[thisNote]);
   }
@@ -511,11 +514,11 @@ void parseCommand(char c)
   
   switch (c)
   {
-    case 's': // Successful Code
+    case MSG_SUCCESSFUL_SOUND: // Successful Code
       PlayGoodSound();
       break;
 
-    case 'f': // Incorrect code
+    case MSG_UNSUCCESSFUL_SOUND: // Incorrect code
       PlayBadSound();
       break;
 
@@ -605,6 +608,7 @@ void parseCommand(char c)
 
 void SendPressedMessage( char msg, bool async )
 {
+  
   pressMessagePayload[0] = msg;
   pressMessage.setFrameId(xbee.getNextFrameId());
 
